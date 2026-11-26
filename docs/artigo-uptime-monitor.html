@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Grupo: ________________________________________________" />
+  <meta name="author" content="Disciplina: Computação em Nuvem" />
+  <meta name="author" content="Professor: Alexandre Seidy Ioshisaqui" />
+  <title>Uptime Monitor: aplicação web containerizada para monitoramento de disponibilidade HTTP</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/mnt/data/uptime-monitor/docs/article-style.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Uptime Monitor: aplicação web containerizada para
+monitoramento de disponibilidade HTTP</h1>
+<p class="author">Grupo:
+________________________________________________</p>
+<p class="author">Disciplina: Computação em Nuvem</p>
+<p class="author">Professor: Alexandre Seidy Ioshisaqui</p>
+<p class="date">PUC-Campinas · Novembro de 2026</p>
+</header>
+<h1 id="resumo">Resumo</h1>
+<p>Este artigo apresenta o desenvolvimento do <strong>Uptime
+Monitor</strong>, uma aplicação web voltada ao monitoramento de
+disponibilidade de serviços HTTP e HTTPS. O projeto foi elaborado para
+atender aos requisitos da disciplina de Computação em Nuvem, priorizando
+uma arquitetura simples, funcional e facilmente demonstrável em ambiente
+local por meio de contêineres Docker. A solução é composta por quatro
+serviços: interface web com Nginx, API REST em FastAPI, worker de
+sondagem periódica e banco de dados PostgreSQL. Como resultado,
+obteve-se uma aplicação capaz de cadastrar monitores, verificar
+periodicamente a disponibilidade dos endereços, armazenar histórico de
+verificações e apresentar indicadores de latência e disponibilidade em
+painel web. O trabalho também evidencia conceitos centrais da
+disciplina, como construção de imagens, orquestração com Docker Compose,
+redes internas, persistência em volume e isolamento entre serviços.</p>
+<p><strong>Palavras-chave:</strong> computação em nuvem; Docker; Docker
+Compose; monitoramento; serviços web.</p>
+<h1 id="introdução">1. Introdução</h1>
+<p>Sistemas distribuídos e aplicações em nuvem dependem da
+disponibilidade contínua de serviços web. Em cenários reais, falhas de
+conectividade, indisponibilidade do servidor ou aumento excessivo de
+latência podem degradar a experiência do usuário e comprometer a
+confiabilidade da aplicação. Nesse contexto, ferramentas de
+observabilidade e monitoramento tornam-se essenciais.</p>
+<p>O objetivo deste projeto é desenvolver uma aplicação web simples,
+porém completa o suficiente para demonstrar os principais conteúdos
+estudados na disciplina. Em vez de construir uma solução muito extensa,
+a proposta foi adotar um domínio coerente com infraestrutura e operação
+de sistemas: o monitoramento de disponibilidade de serviços HTTP.</p>
+<p>O projeto foi guiado por quatro metas principais:</p>
+<ol type="1">
+<li>atender integralmente aos requisitos do trabalho final;</li>
+<li>demonstrar uma arquitetura baseada em múltiplos serviços;</li>
+<li>manter a implementação compreensível para apresentação e
+arguição;</li>
+<li>funcionar localmente, sem depender de serviços pagos ou de uma
+infraestrutura externa.</li>
+</ol>
+<h1 id="visão-geral-da-aplicação">2. Visão geral da aplicação</h1>
+<p>O <strong>Uptime Monitor</strong> permite que o usuário cadastre
+endereços HTTP ou HTTPS e acompanhe o seu estado por meio de um painel
+web. Cada monitor cadastrado possui um nome e uma URL. Periodicamente,
+um serviço de sondagem realiza uma requisição HTTP para cada endereço e
+registra o resultado no banco de dados.</p>
+<p>Com base nesses registros, a interface apresenta:</p>
+<ul>
+<li>quantidade total de monitores cadastrados;</li>
+<li>número de serviços disponíveis e indisponíveis;</li>
+<li>latência média recente;</li>
+<li>disponibilidade acumulada por serviço;</li>
+<li>histórico de verificações e gráfico de latência.</li>
+</ul>
+<p>Além disso, a aplicação possui uma funcionalidade de
+<strong>demonstração local</strong>, que cadastra dois alvos internos:
+um endpoint que responde com sucesso e outro que responde com erro.
+Dessa forma, é possível demonstrar a aplicação mesmo que a internet não
+esteja disponível no momento da apresentação.</p>
+<h1 id="arquitetura-da-solução">3. Arquitetura da solução</h1>
+<p>A arquitetura foi organizada em quatro serviços independentes,
+executados por meio de Docker Compose. Essa divisão favorece o
+isolamento de responsabilidades e demonstra com clareza o modelo de
+composição de serviços.</p>
+<figure>
+<img src="architecture.png" alt="Arquitetura do projeto" />
+<figcaption aria-hidden="true">Arquitetura do projeto</figcaption>
+</figure>
+<h2 id="serviços-da-aplicação">3.1 Serviços da aplicação</h2>
+<p>A Tabela 1 resume os componentes implementados.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Serviço</th>
+<th>Tecnologia</th>
+<th>Responsabilidade principal</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Web</td>
+<td>Nginx + HTML/CSS/JS</td>
+<td>Servir a interface web, arquivos estáticos e atuar como proxy
+reverso da API</td>
+</tr>
+<tr class="even">
+<td>API</td>
+<td>FastAPI</td>
+<td>Receber requisições do frontend, validar dados, consultar e alterar
+o banco</td>
+</tr>
+<tr class="odd">
+<td>Worker</td>
+<td>Python</td>
+<td>Realizar sondagens periódicas dos sites e gravar os resultados</td>
+</tr>
+<tr class="even">
+<td>Banco de dados</td>
+<td>PostgreSQL</td>
+<td>Persistir monitores e histórico de verificações</td>
+</tr>
+</tbody>
+</table>
+<p>A aplicação utiliza duas redes Docker lógicas:</p>
+<ul>
+<li><strong>frontend</strong>: conecta o serviço web aos demais
+componentes necessários para a exposição da aplicação ao usuário;</li>
+<li><strong>data</strong>: rede interna entre API, worker e banco,
+isolando o PostgreSQL do acesso externo.</li>
+</ul>
+<p>Somente o Nginx publica porta para o host, e essa exposição é feita
+apenas em <code>localhost</code>, o que reforça o isolamento e evita o
+acesso direto ao banco.</p>
+<h2 id="justificativa-arquitetural">3.2 Justificativa arquitetural</h2>
+<p>A escolha por quatro serviços atende com folga o requisito mínimo de
+três serviços e demonstra um cenário clássico de arquitetura em camadas.
+Além disso, há pelo menos dois serviços de implementação própria: a API
+e o worker. Isso evita que o projeto seja apenas uma composição de
+imagens prontas do Docker Hub, o que foi explicitamente exigido no
+enunciado.</p>
+<h1 id="estrutura-e-implementação">4. Estrutura e implementação</h1>
+<h2 id="organização-do-código">4.1 Organização do código</h2>
+<p>O projeto foi organizado de forma modular, separando backend,
+frontend, testes e documentação. A estrutura principal está resumida
+abaixo.</p>
+<pre class="text"><code>uptime-monitor/
+├─ compose.yaml
+├─ backend/
+│  ├─ Dockerfile
+│  ├─ api.py
+│  ├─ db.py
+│  ├─ probe.py
+│  ├─ schema.sql
+│  └─ worker.py
+├─ web/
+│  ├─ index.html
+│  ├─ styles.css
+│  ├─ app.js
+│  └─ nginx.conf
+├─ tests/
+│  └─ test_app.py
+└─ docs/
+   ├─ APRESENTACAO.md
+   └─ artigo-uptime-monitor.md</code></pre>
+<p>Essa organização facilita tanto o desenvolvimento quanto a
+compreensão do projeto durante a avaliação.</p>
+<h2 id="banco-de-dados">4.2 Banco de dados</h2>
+<p>O banco PostgreSQL armazena duas entidades principais:</p>
+<ul>
+<li><strong>sites</strong>: tabela com identificador, nome e URL do
+serviço monitorado;</li>
+<li><strong>checks</strong>: tabela de histórico, contendo o resultado
+de cada sondagem, incluindo horário, código HTTP, latência e mensagem de
+erro quando existir.</li>
+</ul>
+<p>A relação entre as tabelas é de um para muitos: um site possui várias
+verificações ao longo do tempo. Esse modelo é suficiente para calcular
+disponibilidade acumulada e construir o histórico mostrado na
+interface.</p>
+<h2 id="api-rest">4.3 API REST</h2>
+<p>A API foi implementada com FastAPI por oferecer simplicidade, boa
+organização e facilidade de definição de contratos HTTP. Os principais
+endpoints são apresentados na Tabela 2.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Método</th>
+<th>Endpoint</th>
+<th>Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>verifica a saúde da API e a conexão com o banco</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/api/sites</code></td>
+<td>lista os monitores cadastrados e o último resultado conhecido</td>
+</tr>
+<tr class="odd">
+<td>POST</td>
+<td><code>/api/sites</code></td>
+<td>cadastra um novo monitor</td>
+</tr>
+<tr class="even">
+<td>GET</td>
+<td><code>/api/sites/{id}/history</code></td>
+<td>retorna o histórico recente do monitor selecionado</td>
+</tr>
+<tr class="odd">
+<td>DELETE</td>
+<td><code>/api/sites/{id}</code></td>
+<td>remove o monitor e seu histórico</td>
+</tr>
+<tr class="even">
+<td>POST</td>
+<td><code>/api/demo</code></td>
+<td>cria os monitores de demonstração local</td>
+</tr>
+</tbody>
+</table>
+<p>Antes de persistir um novo monitor, a API valida o formato do nome e
+da URL, aceitando apenas endereços HTTP e HTTPS. Essa validação evita
+entradas inválidas e reforça a confiabilidade da aplicação.</p>
+<h2 id="worker-de-sondagem">4.4 Worker de sondagem</h2>
+<p>O worker executa continuamente um ciclo de verificação dos sites
+cadastrados. Em cada ciclo, ele consulta a lista de monitores no banco,
+realiza as requisições HTTP e grava os resultados obtidos.</p>
+<p>A lógica de monitoramento segue os critérios abaixo:</p>
+<ul>
+<li>respostas <strong>2xx</strong> e <strong>3xx</strong> são
+consideradas <strong>online</strong>;</li>
+<li>respostas <strong>4xx</strong> e <strong>5xx</strong> são
+consideradas <strong>offline</strong>;</li>
+<li>falhas de DNS, TLS, conexão ou timeout também são registradas como
+<strong>offline</strong>;</li>
+<li>a latência é medida do início da requisição até a obtenção da
+resposta ou até a falha.</li>
+</ul>
+<p>Após concluir um ciclo, o worker aguarda um intervalo configurado e
+reinicia o processo. Esse comportamento permite que o painel seja
+atualizado continuamente.</p>
+<h2 id="interface-web">4.5 Interface web</h2>
+<p>A interface foi construída com HTML, CSS e JavaScript puros, sem
+dependência de frameworks externos. Essa escolha torna a solução mais
+leve e facilita a inspeção do código durante a apresentação.</p>
+<p>As principais funcionalidades da interface são:</p>
+<ul>
+<li>visualização das métricas gerais do sistema;</li>
+<li>listagem de monitores e seus estados;</li>
+<li>cadastro e remoção de monitores;</li>
+<li>detalhamento do monitor selecionado;</li>
+<li>exibição gráfica da latência recente;</li>
+<li>consumo automático da API para atualização periódica do painel.</li>
+</ul>
+<p>Do ponto de vista visual, a UI foi projetada para manter aparência
+limpa, leitura clara e navegação direta, sem exageros visuais que
+prejudiquem a objetividade acadêmica do sistema.</p>
+<h1 id="contêineres-e-orquestração">5. Contêineres e orquestração</h1>
+<p>A orquestração é feita com <code>docker compose</code>, responsável
+por subir os quatro serviços, criar as redes e provisionar o volume
+persistente do banco.</p>
+<h2 id="imagem-própria">5.1 Imagem própria</h2>
+<p>Os serviços <code>api</code> e <code>worker</code> utilizam um
+<code>Dockerfile</code> próprio baseado em Python, atendendo ao
+requisito de possuir pelo menos um serviço de implementação própria. Na
+prática, uma única imagem é construída e reutilizada pelos dois
+serviços, alterando apenas o comando de inicialização.</p>
+<h2 id="persistência">5.2 Persistência</h2>
+<p>O PostgreSQL utiliza um volume nomeado para armazenar os dados. Isso
+permite que os registros sejam mantidos mesmo após a remoção dos
+contêineres com <code>docker compose down</code>, desde que o volume não
+seja removido com a opção <code>-v</code>.</p>
+<h2 id="healthchecks-e-dependências">5.3 Healthchecks e
+dependências</h2>
+<p>Foram definidos healthchecks e dependências entre os serviços para
+reduzir falhas de inicialização. Dessa forma, a aplicação aguarda a
+disponibilidade do banco e da API antes de liberar os componentes
+dependentes.</p>
+<h1 id="execução-e-uso-da-aplicação">6. Execução e uso da aplicação</h1>
+<p>Após extrair o projeto, basta abrir a pasta raiz e executar:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span> <span class="at">--build</span></span></code></pre></div>
+<p>Em seguida, o painel pode ser acessado em
+<code>http://localhost:8080</code>.</p>
+<p>Para uma demonstração rápida, o usuário pode clicar em
+<strong>Carregar demonstração</strong>, o que cadastra dois serviços
+internos:</p>
+<ul>
+<li><code>/demo/online</code>: retorna sucesso;</li>
+<li><code>/demo/offline</code>: retorna erro 503.</li>
+</ul>
+<p>Com isso, a aplicação já apresenta um cenário completo de
+monitoramento, exibindo um serviço disponível e outro indisponível.</p>
+<p>O fluxo típico de uso é o seguinte:</p>
+<ol type="1">
+<li>subir a aplicação com Docker Compose;</li>
+<li>acessar a interface pelo navegador;</li>
+<li>carregar a demonstração ou cadastrar novos sites;</li>
+<li>aguardar as verificações do worker;</li>
+<li>consultar métricas, histórico e gráfico de latência.</li>
+</ol>
+<h1 id="resultados-obtidos">7. Resultados obtidos</h1>
+<p>O sistema foi validado por meio de testes automatizados e de inspeção
+funcional da interface.</p>
+<h2 id="testes-automatizados">7.1 Testes automatizados</h2>
+<p>Foram executados testes direcionados cobrindo, entre outros
+pontos:</p>
+<ul>
+<li>validação das rotas da API;</li>
+<li>cadastro e listagem de monitores;</li>
+<li>exclusão de registros;</li>
+<li>histórico de verificações;</li>
+<li>validação de URL;</li>
+<li>comportamento da rotina de sondagem HTTP.</li>
+</ul>
+<p>Ao final, <strong>13 de 13 testes</strong> foram aprovados no
+ambiente de desenvolvimento utilizado para a construção do projeto.</p>
+<h2 id="resultado-funcional">7.2 Resultado funcional</h2>
+<p>Em execução, a aplicação foi capaz de:</p>
+<ul>
+<li>cadastrar novos monitores;</li>
+<li>exibir estados online e offline;</li>
+<li>calcular disponibilidade acumulada;</li>
+<li>registrar latência e código HTTP;</li>
+<li>persistir os dados em banco;</li>
+<li>manter os registros após reinicialização dos contêineres.</li>
+</ul>
+<p>Esses resultados mostram que a solução atende ao objetivo principal
+proposto para o trabalho.</p>
+<h1 id="limitações-e-melhorias-futuras">8. Limitações e melhorias
+futuras</h1>
+<p>Por se tratar de um projeto acadêmico com foco em simplicidade e
+demonstração local, algumas funcionalidades comuns em soluções
+profissionais não foram implementadas. Entre as limitações,
+destacam-se:</p>
+<ul>
+<li>ausência de autenticação e controle de acesso;</li>
+<li>inexistência de envio de alertas por e-mail ou mensageria;</li>
+<li>cálculo de disponibilidade apenas com base em contagem de
+verificações, e não em janelas temporais avançadas;</li>
+<li>falta de filtros e relatórios mais completos;</li>
+<li>execução voltada ao ambiente local, e não a uma implantação pública
+em nuvem.</li>
+</ul>
+<p>Como trabalhos futuros, seria possível adicionar autenticação,
+alertas em tempo real, dashboards mais avançados, configuração de
+intervalos por serviço e implantação em um provedor de nuvem.</p>
+<h1 id="conclusão">9. Conclusão</h1>
+<p>O projeto <strong>Uptime Monitor</strong> atendeu aos requisitos
+propostos para o trabalho final da disciplina de Computação em Nuvem. A
+solução implementa uma aplicação web funcional, acessível por navegador
+e composta por múltiplos serviços containerizados. Além disso, apresenta
+pelo menos um serviço de implementação própria, organização estrutural
+adequada e elementos claros para demonstração prática em
+apresentação.</p>
+<p>Do ponto de vista didático, o trabalho permitiu aplicar conceitos
+importantes de conteinerização, comunicação entre serviços,
+persistência, orquestração e isolamento. A escolha por um sistema de
+monitoramento de disponibilidade mostrou-se adequada por combinar
+simplicidade de implementação com boa coerência técnica em relação ao
+conteúdo da disciplina.</p>
+<h1 id="referências">Referências</h1>
+<p>DOCKER INC. <em>Docker documentation</em>. Disponível em: <a
+href="https://docs.docker.com/"
+class="uri">https://docs.docker.com/</a>. Acesso em: 25 nov. 2026.</p>
+<p>FASTAPI. <em>FastAPI documentation</em>. Disponível em: <a
+href="https://fastapi.tiangolo.com/"
+class="uri">https://fastapi.tiangolo.com/</a>. Acesso em: 25 nov.
+2026.</p>
+<p>POSTGRESQL GLOBAL DEVELOPMENT GROUP. <em>PostgreSQL
+documentation</em>. Disponível em: <a
+href="https://www.postgresql.org/docs/"
+class="uri">https://www.postgresql.org/docs/</a>. Acesso em: 25 nov.
+2026.</p>
+<p>NGINX. <em>NGINX documentation</em>. Disponível em: <a
+href="https://nginx.org/en/docs/"
+class="uri">https://nginx.org/en/docs/</a>. Acesso em: 25 nov. 2026.</p>
+</body>
+</html>
